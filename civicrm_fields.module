@@ -15,6 +15,7 @@ function civicrm_fields_field_info() {
       'instance_settings' => array(
         'contribution_page_id' => 0,
         'event_page_id' => 0,
+        'mode' => 'live',
       ),
       'default_widget' => 'civicrm_fields_select',
       'default_formatter' => 'civicrm_fields_default',
@@ -31,6 +32,7 @@ function civicrm_fields_field_validate($obj_type, $object, $field, $instance, $l
     $columns = array(
      'contribution_page' => 'contribution_page_id',
      'event_page' => 'event_page_id',
+     'mode' => 'mode',
     );
     foreach ($items as $delta => $item) {
       foreach ($columns as $column => $max_key) {
@@ -96,9 +98,9 @@ function civicrm_fields_field_widget_info() {
 function civicrm_fields_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
   $base = $element;
   if ($instance['entity_type'] == 'paragraphs_item') {
-    $states_prefix = $form['#field_name'] . '[und][0][' . $instance[field_name] . '][und][0]';
+    $states_prefix = $form['#field_name'] . '[und][0][' . $instance['field_name'] . '][und][0]';
   } else {
-    $states_prefix = $instance[field_name] . '[und][0]';
+    $states_prefix = $instance['field_name'] . '[und][0]';
   }
   if ($instance['widget']['type'] == 'civicrm_fields_select') {
     $element['page_type'] = array(
@@ -127,6 +129,15 @@ function civicrm_fields_field_widget_form(&$form, &$form_state, $field, $instanc
         'visible' => array(
           'select[name="'. $states_prefix . '[page_type]"]' => array('value' => 'civicrm/event/register'),
         ),
+      ),
+    ) + $base;
+    $element['mode'] = array(
+      '#type' => 'select',
+      '#title' => t('Mode'),
+      '#default_value' => isset($items[$delta]['mode']) ? $items[$delta]['mode'] : 'live',
+      '#options' => array(
+        'preview' => 'Test mode',
+        'live' => 'Live mode',
       ),
     ) + $base;
   }
@@ -206,7 +217,12 @@ function civicrm_fields_field_formatter_view($obj_type, $object, $field, $instan
               'id' => $item['contribution_page'],
             ]);
             if (isset($contributionpage['id']) && isset($contributionpage['is_active']) && $contributionpage['is_active'] == '1') {
-              $output = _civicrm_fields_inject_page($item['page_type'], $item['contribution_page']);
+              $args = array(
+                'id' => $item['contribution_page'],
+                'q' => $item['page_type'],
+                'action' => $item['mode'],
+              );
+              $output = _civicrm_fields_inject_page($args);
             }
             break;
             
@@ -219,7 +235,12 @@ function civicrm_fields_field_formatter_view($obj_type, $object, $field, $instan
               'id' => $item['event_page'],
             ]);
             if (isset($eventpage['id'])) {
-              $output = _civicrm_fields_inject_page($item['page_type'], $item['event_page']);
+              $args = array(
+                'id' => $item['event_page'],
+                'q' => $item['page_type'],
+                'action' => $item['mode'],
+              );
+              $output = _civicrm_fields_inject_page($args);
             }
             break;
             
@@ -303,7 +324,6 @@ function civicrm_fields_event_page_options() {
   */
 function _civicrm_fields_display_link($type = '', $pageid = 0, $title = '') {
   if (civicrm_fields_pagetype($type) != '' && is_numeric($pageid) && $pageid > 0) {
-    
     $button = "<a class='civicrm_fields_button button' href='/" . $type . "?reset=1&id=" . $pageid ."'>";
     $button .= civicrm_fields_pagetype($type) . " " . $title;
     $button .= "</a>";
@@ -315,7 +335,9 @@ function _civicrm_fields_display_link($type = '', $pageid = 0, $title = '') {
   * Inject CiviCRM page into content.
   *
   */
-function _civicrm_fields_inject_page($type = '', $pageid = 0) {
+function _civicrm_fields_inject_page($args = array()) {
+  $type = (!empty($args['q'])) ? $args['q'] : '';
+  $pageid = (!empty($args['id'])) ? $args['id'] : 0;
   if (civicrm_fields_pagetype($type) != '' && is_numeric($pageid) && $pageid > 0) {
     civicrm_initialize();
     // Initialize the system by creating a config object
@@ -325,7 +347,7 @@ function _civicrm_fields_inject_page($type = '', $pageid = 0) {
     // Load core resources
     CRM_Core_Resources::singleton()->addCoreResources();
 
-    $args = array(
+    $args += array(
       'id' => $pageid,
       'reset' => 1,
       'q' => $type,
