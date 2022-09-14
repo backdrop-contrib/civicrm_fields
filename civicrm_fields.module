@@ -1,5 +1,5 @@
 <?php
-  
+
 define('CIVICRM_EVENT_LABEL', t('Event Registration Page'));
 define('CIVICRM_CONTRIBUTION_LABEL', t('Contribution Page'));
 
@@ -53,7 +53,7 @@ function civicrm_fields_field_validate($obj_type, $object, $field, $instance, $l
 
 function civicrm_fields_form_field_ui_field_edit_form_alter(&$form, &$form_state, $form_id) {
   $field = $form['#field'];
-  
+
   if ($field['type'] == 'civicrm_page') {
     $form['field']['cardinality_container']['#disabled'] = TRUE;
     $form['field']['cardinality_container']['#description'] = t('We can insert a maximum of one CiviCRM page currently.');
@@ -185,7 +185,7 @@ function civicrm_fields_field_formatter_view($obj_type, $object, $field, $instan
               $output = _civicrm_fields_display_link($item['page_type'], $item['contribution_page'], $contributionpage['title']);
             }
             break;
-            
+
           case 'civicrm/event/register':
             $eventpage = civicrm_api3('Event', 'getsingle', [
               'sequential' => 1,
@@ -198,14 +198,14 @@ function civicrm_fields_field_formatter_view($obj_type, $object, $field, $instan
               $output = _civicrm_fields_display_link($item['page_type'], $item['event_page'], $eventpage['title']);
             }
             break;
-            
+
           default:
             unset($element[$delta]);
         }
         $element[$delta] = array('#markup' => $output);
       }
       break;
-      
+
     case 'civicrm_fields_default':
     default:
       foreach ($items as $delta => $item) {
@@ -225,7 +225,7 @@ function civicrm_fields_field_formatter_view($obj_type, $object, $field, $instan
               $output = _civicrm_fields_inject_page($args);
             }
             break;
-            
+
           case 'civicrm/event/register':
             $eventpage = civicrm_api3('Event', 'getsingle', [
               'sequential' => 1,
@@ -243,7 +243,7 @@ function civicrm_fields_field_formatter_view($obj_type, $object, $field, $instan
               $output = _civicrm_fields_inject_page($args);
             }
             break;
-            
+
           default:
             unset($element[$delta]);
         }
@@ -352,7 +352,7 @@ function _civicrm_fields_inject_page($args = array()) {
       'reset' => 1,
       'q' => $type,
     );
-    
+
     // invoke() requires environment variables to be set
     $request = $_REQUEST;
     $get = $_GET;
@@ -362,20 +362,20 @@ function _civicrm_fields_inject_page($args = array()) {
         $_REQUEST[$key] = $_GET[$key] = $value;
       }
     }
-    
+
     //Invoke will require the 'q' arg to be broken up.
     $explodedargs = explode('/', $args['q']);
     $args = array_merge($explodedargs, $args);
-    
+
     ob_start(); // Start buffering
     CRM_Core_Invoke::invoke($args); // Save output into buffer
     $content = ob_get_clean(); // Save the buffered output and flush the buffer
-    
+
     // reset the environment
     $_REQUEST = $request;
     $_GET = $get;
     backdrop_set_title($pagetitle);
-    
+
     return $content;
   }
 }
