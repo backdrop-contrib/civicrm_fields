@@ -358,6 +358,44 @@ function _civicrm_fields_inject_page($args = array()) {
   $pageid = (!empty($args['id'])) ? $args['id'] : 0;
   if (civicrm_fields_pagetype($type) != '' && is_numeric($pageid) && $pageid > 0) {
     civicrm_initialize();
+
+    if ($type == 'civicrm/event/register') {
+      $hasPermission = CRM_Core_Permission::event(CRM_Core_Permission::EDIT,
+        $pageid, 'register for events'
+      );
+      if (!$hasPermission) {
+        $message = "<div class='messages warning'>";
+        $message .= "You do not have permission to register for this event. Contact us if this is in error.";
+        $message .= "</div>";
+        return $message;
+      }
+    }
+
+    // Ensure we're not injecting the page if it's an event page and the
+    // current user is already registered or registration is closed, etc.
+    if ($GLOBALS['user']->uid > 0) {
+      $uFMatches = \Civi\Api4\UFMatch::get()
+        ->addWhere('uf_id', '=', $GLOBALS['user']->uid)
+        ->setLimit(1)
+        ->execute();
+      foreach ($uFMatches as $uFMatch) {
+        $contact_id = $uFMatch['contact_id'];
+      }
+      $participants = \Civi\Api4\Participant::get()
+        ->addWhere('contact_id', '=', $contact_id)
+        ->addWhere('event_id', '=', $pageid)
+        ->setLimit(25)
+        ->execute();
+      foreach ($participants as $participant) {
+        if ($participant['status_id'] == 1 && !$participant['is_test']) {
+          $message = "<div class='messages info'>";
+          $message .= "It looks like you are already registered for this event. Contact us if this is an error.";
+          $message .= "</div>";
+          return $message;
+        }
+      }
+    }
+
     // Initialize the system by creating a config object
     $config = CRM_Core_Config::singleton();
     $config->userFrameworkFrontend = TRUE;
