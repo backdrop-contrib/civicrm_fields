@@ -21,6 +21,12 @@ function civicrm_fields_field_schema($field) {
       'not null' => FALSE,
     );
 
+    $schema['columns']['button_text'] = array(
+      'type' => 'varchar',
+      'length' => 96,
+      'not null' => FALSE,
+    );
+
     $schema['indexes'] = array(
       'contribution_page' => array('contribution_page'),
       'event_page' => array('event_page'),

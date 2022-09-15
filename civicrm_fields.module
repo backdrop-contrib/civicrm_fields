@@ -16,6 +16,7 @@ function civicrm_fields_field_info() {
         'contribution_page_id' => 0,
         'event_page_id' => 0,
         'mode' => 'live',
+        'button_text' => '',
       ),
       'default_widget' => 'civicrm_fields_select',
       'default_formatter' => 'civicrm_fields_default',
@@ -33,6 +34,7 @@ function civicrm_fields_field_validate($obj_type, $object, $field, $instance, $l
      'contribution_page' => 'contribution_page_id',
      'event_page' => 'event_page_id',
      'mode' => 'mode',
+     'button_text' => 'button_text',
     );
     foreach ($items as $delta => $item) {
       foreach ($columns as $column => $max_key) {
@@ -108,12 +110,14 @@ function civicrm_fields_field_widget_form(&$form, &$form_state, $field, $instanc
       '#title' => t('CiviCRM Page Type'),
       '#default_value' => isset($items[$delta]['page_type']) ? $items[$delta]['page_type'] : NULL,
       '#options' => civicrm_fields_pagetype(),
+      '#weight' => 0,
     ) + $base;
     $element['contribution_page'] = array(
       '#type' => 'select',
       '#title' => t('Contribution Page'),
       '#default_value' => isset($items[$delta]['contribution_page']) ? $items[$delta]['contribution_page'] : NULL,
       '#options' => civicrm_fields_contribution_page_options(),
+      '#weight' => 5,
       '#states' => array(
         'visible' => array(
           'select[name="'. $states_prefix . '[page_type]"]' => array('value' => 'civicrm/contribute/transact'),
@@ -125,11 +129,18 @@ function civicrm_fields_field_widget_form(&$form, &$form_state, $field, $instanc
       '#title' => t('Event Registration Page'),
       '#default_value' => isset($items[$delta]['event_page']) ? $items[$delta]['event_page'] : NULL,
       '#options' => civicrm_fields_event_page_options(),
+      '#weight' => 5,
       '#states' => array(
         'visible' => array(
           'select[name="'. $states_prefix . '[page_type]"]' => array('value' => 'civicrm/event/register'),
         ),
       ),
+    ) + $base;
+    $element['button_text'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Button text'),
+      '#default_value' => isset($items[$delta]['button_text']) ? $items[$delta]['button_text'] : '',
+      '#weight' => 10,
     ) + $base;
     $element['mode'] = array(
       '#type' => 'select',
@@ -139,6 +150,7 @@ function civicrm_fields_field_widget_form(&$form, &$form_state, $field, $instanc
         'preview' => 'Test mode',
         'live' => 'Live mode',
       ),
+      '#weight' => 15,
     ) + $base;
   }
 
@@ -195,7 +207,13 @@ function civicrm_fields_field_formatter_view($obj_type, $object, $field, $instan
               'id' => $item['event_page'],
             ]);
             if (isset($eventpage['id'])) {
-              $output = _civicrm_fields_display_link($item['page_type'], $item['event_page'], $eventpage['title']);
+              if (empty($item['button_text'])) {
+                $title = $eventpage['title'];
+              }
+              else {
+                $title = $item['button_text'];
+              }
+              $output = _civicrm_fields_display_link($item['page_type'], $item['event_page'], $title);
             }
             break;
 
@@ -325,7 +343,7 @@ function civicrm_fields_event_page_options() {
 function _civicrm_fields_display_link($type = '', $pageid = 0, $title = '') {
   if (civicrm_fields_pagetype($type) != '' && is_numeric($pageid) && $pageid > 0) {
     $button = "<a class='civicrm_fields_button button' href='/" . $type . "?reset=1&id=" . $pageid ."'>";
-    $button .= civicrm_fields_pagetype($type) . " " . $title;
+    $button .= $title;
     $button .= "</a>";
     return $button;
   }
