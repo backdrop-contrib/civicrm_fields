@@ -115,7 +115,7 @@ function civicrm_fields_field_widget_form(&$form, &$form_state, $field, $instanc
     $element['contribution_page'] = array(
       '#type' => 'select',
       '#title' => t('Contribution Page'),
-      '#default_value' => isset($items[$delta]['contribution_page']) ? $items[$delta]['contribution_page'] : NULL,
+      '#default_value' => isset($items[$delta]['contribution_page']) ? $items[$delta]['contribution_page'] : 0,
       '#options' => civicrm_fields_contribution_page_options(),
       '#weight' => 5,
       '#states' => array(
@@ -127,7 +127,7 @@ function civicrm_fields_field_widget_form(&$form, &$form_state, $field, $instanc
     $element['event_page'] = array(
       '#type' => 'select',
       '#title' => t('Event Registration Page'),
-      '#default_value' => isset($items[$delta]['event_page']) ? $items[$delta]['event_page'] : NULL,
+      '#default_value' => isset($items[$delta]['event_page']) ? $items[$delta]['event_page'] : 0,
       '#options' => civicrm_fields_event_page_options(),
       '#weight' => 5,
       '#states' => array(
@@ -300,13 +300,14 @@ function civicrm_fields_pagetype($type = NULL) {
  */
 function civicrm_fields_contribution_page_options() {
   civicrm_initialize();
-  $contribution_page_options = array();
+  $contribution_page_options = array(
+    0 => 'None',
+  );
   $contribution_activepages = civicrm_api3('ContributionPage', 'get', [
     'sequential' => 1,
     'is_active' => 1,
   ]);
   if ($contribution_activepages['count'] > 0) {
-    $contribution_page_options[0] = 'None';
     foreach ($contribution_activepages['values'] as $contribution_activepage) {
       $contribution_page_options[$contribution_activepage['id']] = $contribution_activepage['title'];
     }
@@ -320,7 +321,9 @@ function civicrm_fields_contribution_page_options() {
  */
 function civicrm_fields_event_page_options() {
   civicrm_initialize();
-  $event_page_options = array();
+  $event_page_options = array(
+    0 => 'None',
+  );
   $event_activepages = civicrm_api3('Event', 'get', [
     'sequential' => 1,
     'is_public' => 1,
@@ -328,7 +331,6 @@ function civicrm_fields_event_page_options() {
     'is_online_registration' => 1,
   ]);
   if ($event_activepages['count'] > 0) {
-    $event_page_options[0] = 'None';
     foreach ($event_activepages['values'] as $event_activepage) {
       $event_page_options[$event_activepage['id']] = $event_activepage['title'];
     }
